@@ -38,8 +38,8 @@ from typing import Any
 
 from prometheus_client import Counter, Gauge, Histogram, start_http_server
 
-from storage.archive_client import ArchiveClient
-from storage.archive_client.client import ArchiveConfig
+from archive_client import ArchiveClient
+from archive_client.client import ArchiveConfig
 
 logger = logging.getLogger("storage.archiver")
 

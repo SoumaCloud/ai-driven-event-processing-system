@@ -9,9 +9,9 @@ from typing import Any
 
 import pytest
 
-from storage.archive_client import ArchiveClient
-from storage.archive_client.client import ArchiveConfig
-from storage.archiver import Archiver, ArchiverSettings, to_record
+from archive_client import ArchiveClient
+from archive_client.client import ArchiveConfig
+from archiver import Archiver, ArchiverSettings, to_record
 
 
 class FakeS3:

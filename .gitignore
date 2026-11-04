@@ -63,7 +63,7 @@ logs/
 
 # ─── Local stack ─────────────────────────────────────────────────────────────
 # Playbooks written when running diagnostic-service outside Docker.
-diagnostic-service/playbooks/
+services/diagnostic-service/playbooks/
 
 # ─── Kubernetes secrets / generated ──────────────────────────────────────────
 infra/k8s/secrets/
@@ -97,9 +97,9 @@ override.tf.json
 *_override.tf.json
 
 # ─── Forecasting model artefacts (trained by training/train_forecast_model.py) ─
-forecasting-service/models/*
-!forecasting-service/models/.gitkeep
+services/forecasting-service/models/*
+!services/forecasting-service/models/.gitkeep
 
 # ─── Load test artefacts ─────────────────────────────────────────────────────
-loadtest/.lib/
-loadtest/results/
+tests/load/.lib/
+tests/load/results/

@@ -180,7 +180,7 @@ services:
   # ── Ingestion Service (Java Spring Boot) ───────────────────────────────────
   ingestion-service:
     build:
-      context: ../ingestion-service
+      context: ../services/ingestion-service
       dockerfile: Dockerfile
     image: ai-event-processor/ingestion-service:local
     container_name: ingestion-service
@@ -215,7 +215,7 @@ services:
   # ── Diagnostic Service (Python FastAPI) — anomaly detection, REQ-016 to REQ-020 ──
   diagnostic-service:
     build:
-      context: ../diagnostic-service
+      context: ../services/diagnostic-service
       dockerfile: Dockerfile
     image: ai-event-processor/diagnostic-service:local
     container_name: diagnostic-service
@@ -272,7 +272,7 @@ services:
   # ── Forecasting Service (Python FastAPI) ───────────────────────────────────
   forecasting-service:
     build:
-      context: ../forecasting-service
+      context: ../services/forecasting-service
       dockerfile: Dockerfile
       args:
         INSTALL_ML: ${INSTALL_ML:-true}   # PyTorch + pytorch-forecasting for the TFT
@@ -301,10 +301,10 @@ services:
       OAUTH2_AUDIENCE: ${OAUTH2_AUDIENCE:-}
     volumes:
       # Bind-mounted so threshold/component edits hot-reload (mtime) without a rebuild.
-      - ../forecasting-service/config:/app/config:ro
+      - ../services/forecasting-service/config:/app/config:ro
       # Trained models: tft.ckpt (training/train_tft.py) and forecast_model.json
       # (training/train_forecast_model.py); absent → statistical forecaster.
-      - ../forecasting-service/models:/models:ro
+      - ../services/forecasting-service/models:/models:ro
       - forecast-data:/data
     depends_on:
       prometheus:
@@ -432,7 +432,7 @@ services:
   # ── Event archiver (Kafka → S3, REQ-028) ───────────────────────────────────
   event-archiver:
     build:
-      context: ../storage
+      context: ../services/event-archiver
       dockerfile: Dockerfile
     image: ai-event-processor/event-archiver:local
     container_name: event-archiver
@@ -462,7 +462,7 @@ services:
   # the services' own APIs. Not part of the production deployment (infra/k8s).
   demo-console:
     build:
-      context: ../console
+      context: ../services/web-console
       dockerfile: Dockerfile
     image: ai-event-processor/demo-console:local
     container_name: demo-console

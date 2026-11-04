@@ -11,7 +11,7 @@ SHELL := /usr/bin/env bash
 
 COMPOSE_FILE  := infra/docker-compose.yml
 COMPOSE       := docker compose -f $(COMPOSE_FILE)
-PY_SERVICES   := forecasting-service diagnostic-service
+PY_SERVICES   := services/forecasting-service services/diagnostic-service
 PYTHON        ?= python3
 KUBECONFORM_VERSION ?= v0.8.0
 KUBECONFORM_CACHE ?= $(HOME)/.cache/kubeconform
@@ -24,7 +24,7 @@ TERRAFORM     := docker run --rm -v $(CURDIR)/infra/terraform:/tf -v $(TF_PLUGIN
                    -e TF_PLUGIN_CACHE_DIR=/tf-cache -w /tf $(TERRAFORM_IMAGE)
 
 # Use ./mvnw when the wrapper exists, otherwise a system mvn.
-MVN := $(if $(wildcard ingestion-service/mvnw),./mvnw,mvn)
+MVN := $(if $(wildcard services/ingestion-service/mvnw),./mvnw,mvn)
 # The service targets Java 17; use a Homebrew JDK 17 when present, else the default JDK.
 JAVA17_HOME ?= $(firstword $(wildcard /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home /usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home))
 
@@ -51,17 +51,17 @@ build: ## Build all service images (INSTALL_ML=true for tensorflow/scikit-learn)
 test: test-java test-python test-storage ## Run all test suites
 
 test-java: ## ingestion-service tests (Maven)
-	cd ingestion-service && $(if $(JAVA17_HOME),JAVA_HOME=$(JAVA17_HOME) )$(MVN) -B verify
+	cd services/ingestion-service && $(if $(JAVA17_HOME),JAVA_HOME=$(JAVA17_HOME) )$(MVN) -B verify
 
 test-python: ## forecasting + diagnostic tests (pytest; needs requirements-dev.txt installed)
 	@for s in $(PY_SERVICES); do echo "== $$s"; (cd $$s && $(PYTHON) -m pytest -q); done
 
-test-storage: ## event-archiver / S3 archive client tests (pytest; needs storage/requirements-dev.txt)
-	cd storage && $(PYTHON) -m pytest -q
+test-storage: ## event-archiver / S3 archive client tests (pytest; needs services/event-archiver/requirements-dev.txt)
+	cd services/event-archiver && $(PYTHON) -m pytest -q
 
 lint: compose-validate ## ruff + mypy for Python services, shellcheck, compose config
 	@for s in $(PY_SERVICES); do echo "== $$s"; (cd $$s && $(PYTHON) -m ruff check . && $(PYTHON) -m mypy app); done
-	@echo "== storage"; cd storage && $(PYTHON) -m ruff check . && $(PYTHON) -m mypy archive_client archiver.py
+	@echo "== services/event-archiver"; cd services/event-archiver && $(PYTHON) -m ruff check . && $(PYTHON) -m mypy archive_client archiver.py
 	@if command -v shellcheck >/dev/null; then shellcheck scripts/*.sh; else echo "shellcheck not installed; running bash -n only"; for f in scripts/*.sh; do bash -n "$$f"; done; fi
 
 prom-test: ## promtool: check + unit-test Prometheus alert/recording rules
@@ -77,13 +77,13 @@ tf-validate: ## terraform fmt -check + validate (no AWS credentials needed)
 	$(TERRAFORM) validate
 
 train-tft: ## Train the Temporal Fusion Transformer on local Prometheus history in Docker, then reload forecasting (DAYS=2, EPOCHS=6, BATCHES=60; ~15 min on CPU)
-	$(COMPOSE) run --rm --no-deps -v $(CURDIR)/forecasting-service/models:/out forecasting-service \
+	$(COMPOSE) run --rm --no-deps -v $(CURDIR)/services/forecasting-service/models:/out forecasting-service \
 		python -m training.train_tft --prometheus-url http://prometheus:9090 --days $(or $(DAYS),2) \
 		--epochs $(or $(EPOCHS),6) --max-batches $(or $(BATCHES),60) --output /out/tft.ckpt --version $(or $(VERSION),tft-$$(date +%Y%m%d-%H%M))
 	$(COMPOSE) restart forecasting-service
 
 train: ## Train the forecasting model from local Prometheus (VERSION=..., DAYS=7)
-	cd forecasting-service && $(PYTHON) -m training.train_forecast_model --prometheus-url http://localhost:9090 \
+	cd services/forecasting-service && $(PYTHON) -m training.train_forecast_model --prometheus-url http://localhost:9090 \
 		--days $(or $(DAYS),7) --output models/forecast_model.json --version $(or $(VERSION),forecast-$$(date +%Y.%m.%d))
 
 compose-validate: ## Validate docker-compose
