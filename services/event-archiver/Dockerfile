@@ -29,9 +29,8 @@ RUN groupadd --system --gid 10001 app \
 COPY --from=builder /opt/venv /opt/venv
 
 WORKDIR /app
-# Imported as the top-level package `storage` (python -m storage.archiver).
-COPY --chown=10001:10001 __init__.py archiver.py ./storage/
-COPY --chown=10001:10001 archive_client/ ./storage/archive_client/
+COPY --chown=10001:10001 __init__.py archiver.py ./
+COPY --chown=10001:10001 archive_client/ ./archive_client/
 
 ENV PATH="/opt/venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
@@ -47,4 +46,4 @@ EXPOSE 8083
 HEALTHCHECK --interval=20s --timeout=5s --start-period=20s --retries=5 \
     CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8083/metrics', timeout=3)"]
 
-CMD ["python", "-m", "storage.archiver"]
+CMD ["python", "archiver.py"]

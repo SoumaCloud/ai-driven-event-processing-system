@@ -43,7 +43,7 @@ pipeline {
             parallel {
                 stage('ingestion-service (Maven)') {
                     steps {
-                        dir('ingestion-service') {
+                        dir('services/ingestion-service') {
                             sh 'chmod +x mvnw'
                             sh './mvnw -B -q -DskipTests package'
                         }
@@ -51,7 +51,7 @@ pipeline {
                 }
                 stage('forecasting-service (pip)') {
                     steps {
-                        dir('forecasting-service') {
+                        dir('services/forecasting-service') {
                             sh 'python3 -m venv .venv'
                             sh '. .venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt -r requirements-dev.txt'
                         }
@@ -59,7 +59,7 @@ pipeline {
                 }
                 stage('diagnostic-service (pip)') {
                     steps {
-                        dir('diagnostic-service') {
+                        dir('services/diagnostic-service') {
                             sh 'python3 -m venv .venv'
                             sh '. .venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt -r requirements-dev.txt'
                         }
@@ -67,7 +67,7 @@ pipeline {
                 }
                 stage('event-archiver (pip)') {
                     steps {
-                        dir('storage') {
+                        dir('services/event-archiver') {
                             sh 'python3 -m venv .venv'
                             sh '. .venv/bin/activate && pip install --upgrade pip && pip install -r requirements-dev.txt'
                         }
@@ -80,19 +80,19 @@ pipeline {
             parallel {
                 stage('ingestion-service — unit + integration') {
                     steps {
-                        dir('ingestion-service') {
+                        dir('services/ingestion-service') {
                             sh './mvnw -B verify'
                         }
                     }
                     post {
                         always {
-                            junit testResults: 'ingestion-service/target/surefire-reports/*.xml', allowEmptyResults: true
+                            junit testResults: 'services/ingestion-service/target/surefire-reports/*.xml', allowEmptyResults: true
                         }
                     }
                 }
                 stage('forecasting-service — lint, typecheck, test') {
                     steps {
-                        dir('forecasting-service') {
+                        dir('services/forecasting-service') {
                             sh '. .venv/bin/activate && ruff check .'
                             sh '. .venv/bin/activate && mypy app'
                             sh '. .venv/bin/activate && pytest -v --tb=short'
@@ -101,7 +101,7 @@ pipeline {
                 }
                 stage('diagnostic-service — lint, typecheck, test') {
                     steps {
-                        dir('diagnostic-service') {
+                        dir('services/diagnostic-service') {
                             sh '. .venv/bin/activate && ruff check .'
                             sh '. .venv/bin/activate && mypy app'
                             sh '. .venv/bin/activate && pytest -v --tb=short'
@@ -110,7 +110,7 @@ pipeline {
                 }
                 stage('event-archiver — lint, typecheck, test') {
                     steps {
-                        dir('storage') {
+                        dir('services/event-archiver') {
                             sh '. .venv/bin/activate && ruff check .'
                             sh '. .venv/bin/activate && mypy archive_client archiver.py'
                             sh '. .venv/bin/activate && pytest -v --tb=short'
@@ -141,12 +141,11 @@ pipeline {
                 stages {
                     stage('build') {
                         steps {
-                            // event-archiver's build context is storage/, demo-console's is console/;
+                            // Service build contexts are under services/
                             // forecasting-service is built with the TFT (PyTorch) extra.
                             sh '''
-                                CONTEXT="./$SERVICE"; ARGS=""
-                                if [ "$SERVICE" = event-archiver ]; then CONTEXT=./storage; fi
-                                if [ "$SERVICE" = demo-console ]; then CONTEXT=./console; fi
+                                CONTEXT="./services/$SERVICE"; ARGS=""
+                                if [ "$SERVICE" = demo-console ]; then CONTEXT=./services/web-console; fi
                                 if [ "$SERVICE" = forecasting-service ]; then ARGS="--build-arg INSTALL_ML=true"; fi
                                 docker build $ARGS -t "$REGISTRY/$REPO_PREFIX/$SERVICE:$IMAGE_TAG" "$CONTEXT"
                             '''
@@ -162,11 +161,11 @@ pipeline {
             }
             steps {
                 // REQ-001 / REQ-004: fails the build if any requirement check fails.
-                sh "loadtest/run-load-test.sh --rate ${params.LOAD_RATE} --duration ${params.LOAD_DURATION}"
+                sh "tests/load/run-load-test.sh --rate ${params.LOAD_RATE} --duration ${params.LOAD_DURATION}"
             }
             post {
                 always {
-                    archiveArtifacts artifacts: 'loadtest/results/**', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'tests/load/results/**', allowEmptyArchive: true
                 }
             }
         }

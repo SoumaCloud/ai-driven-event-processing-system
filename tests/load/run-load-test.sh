@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# loadtest/run-load-test.sh — JMeter load test against the running local stack.
+# tests/load/run-load-test.sh — JMeter load test against the running local stack.
 #
-#   loadtest/run-load-test.sh [--rate N] [--duration S] [--threads N] [--batch N] [--api-rate N]
+#   tests/load/run-load-test.sh [--rate N] [--duration S] [--threads N] [--batch N] [--api-rate N]
 #
 # Needs: the stack up (make up), JMeter 5.6+ (on PATH or JMETER_HOME), Maven
 # (to fetch the Kafka client jars for JMeter, offline from ~/.m2 when cached).
-# Output: loadtest/results/<run id>/ — results.jtl, HTML dashboard (report/),
+# Output: tests/load/results/<run id>/ — results.jtl, HTML dashboard (report/),
 # summary.md (PASS/FAIL per requirement). Exit status 1 if any check fails.
 #
 # Targets default to the compose stack's host ports; override to run from
@@ -13,7 +13,7 @@
 #   KAFKA_BOOTSTRAP, INGESTION_URL, DIAGNOSTIC_HOST/_PORT, FORECASTING_HOST/_PORT, PROMETHEUS_URL
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 RATE=2000 DURATION=120 THREADS=8 BATCH=100 API_RATE=30 API_THREADS=4 API_MAX_MS=500
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -55,11 +55,11 @@ curl -sf "$INGESTION_URL/actuator/health" >/dev/null || { echo "stack not reacha
 # Kafka client for the JSR223 producer (JMeter doesn't ship one). Taken from
 # the ingestion-service boot jar when built (same versions the service uses),
 # else resolved with Maven.
-LIB="$ROOT/loadtest/.lib"
+LIB="$ROOT/tests/load/.lib"
 JARS="kafka-clients lz4-java snappy-java zstd-jni"
 if ! ls "$LIB"/kafka-clients-*.jar >/dev/null 2>&1; then
   mkdir -p "$LIB"
-  BOOT_JAR="$(ls "$ROOT"/ingestion-service/target/ingestion-service-*.jar 2>/dev/null | head -1 || true)"
+  BOOT_JAR="$(ls "$ROOT"/services/ingestion-service/target/ingestion-service-*.jar 2>/dev/null | head -1 || true)"
   if [[ -n "$BOOT_JAR" ]]; then
     echo "Extracting Kafka client jars from $(basename "$BOOT_JAR") …"
     python3 - "$BOOT_JAR" "$LIB" $JARS <<'PY'
@@ -74,19 +74,19 @@ with zipfile.ZipFile(jar) as z:
 PY
   else
     echo "Resolving Kafka client jars with Maven into $LIB …"
-    MVN="$(command -v mvn || echo "$ROOT/ingestion-service/mvnw")"
-    "$MVN" -q -f "$ROOT/ingestion-service/pom.xml" dependency:copy-dependencies \
+    MVN="$(command -v mvn || echo "$ROOT/services/ingestion-service/mvnw")"
+    "$MVN" -q -f "$ROOT/services/ingestion-service/pom.xml" dependency:copy-dependencies \
       -DincludeArtifactIds="${JARS// /,}" -DoutputDirectory="$LIB"
   fi
 fi
 
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)"
-OUT="$ROOT/loadtest/results/$RUN_ID"
+OUT="$ROOT/tests/load/results/$RUN_ID"
 mkdir -p "$OUT"
 echo "Run $RUN_ID: ${RATE} events/s for ${DURATION}s (${THREADS} producer threads, batch ${BATCH}), API ${API_RATE} req/s"
 
 START="$(date +%s)"
-"$JMETER" -n -t "$ROOT/loadtest/jmeter/event-processing-load.jmx" \
+"$JMETER" -n -t "$ROOT/tests/load/jmeter/event-processing-load.jmx" \
   -Juser.classpath="$LIB" -Jbootstrap="$KAFKA_BOOTSTRAP" \
   -Jdiagnostic_host="$DIAGNOSTIC_HOST" -Jforecasting_host="$FORECASTING_HOST" \
   -Jdiagnostic_port="$DIAGNOSTIC_PORT" -Jforecasting_port="$FORECASTING_PORT" \
@@ -99,7 +99,7 @@ sleep 40
 END="$(date +%s)"
 
 set +e
-python3 "$ROOT/loadtest/analyze.py" --jtl "$OUT/results.jtl" --start "$START" --end "$END" \
+python3 "$ROOT/tests/load/analyze.py" --jtl "$OUT/results.jtl" --start "$START" --end "$END" \
   --rate "$RATE" --batch "$BATCH" --duration "$DURATION" --api-max-ms "$API_MAX_MS" \
   --prometheus "$PROMETHEUS_URL" --out "$OUT/summary.md"
 status=$?
