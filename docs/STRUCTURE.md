@@ -38,11 +38,11 @@ ai-driven-system/
 │   │   ├── archive_client/client.py   ArchiveClient: archive_batch / archive (boto3; MinIO or S3)
 │   │   └── tests/                     Fake S3 + consumer tests
 │   │
-│   └── web-console/                   Demo dashboard on :9099 (FastAPI backend + TypeScript front-end)
+│   └── web-console/                   Demo dashboard on :9099 (FastAPI backend, TypeScript page, JS logic)
 │       ├── app.py, requirements.txt, Dockerfile
 │       ├── package.json, tsconfig.json  TypeScript build (tsc → static/js/)
-│       ├── src/                       console.ts, util.ts, types.ts (API response types)
-│       └── static/                    index.html, console.css (+ generated js/)
+│       ├── src/page.ts                Page markup, rendered into <body> on load
+│       └── static/                    index.html (shell), console.js, console.css (+ generated js/)
 │
 ├── contracts/                         Machine-readable contracts (JSON Schema 2020-12)
 │   ├── README.md

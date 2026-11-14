@@ -14,7 +14,7 @@ Demo steps: **01** publish events (some broken on purpose) · **02** read the la
 
 Port 9092 is Kafka's binary protocol, not a web page. Opening it in a browser only logs `InvalidReceiveException (size = 1195725856)` in Kafka, which is the bytes `GET `. Use this console to see Kafka instead.
 
-The front-end is TypeScript: `src/console.ts` (page logic), `src/util.ts` (DOM, formatting, fetch helpers) and `src/types.ts` (the `/api/*` response shapes). `tsc` compiles it to `static/js/`, which is gitignored; the Docker build does this in a Node stage. `static/` holds the hand-written `index.html` and `console.css`.
+The page markup is TypeScript: `src/page.ts` builds every section and inserts it into `<body>` before `static/console.js` (the page logic) runs. `tsc` compiles it to `static/js/page.js`, which is gitignored; the Docker build does this in a Node stage. `static/index.html` is only the shell (head, fonts, styles, the two scripts). Keep the ids and classes in `page.ts` in step with `console.js` and `console.css`.
 
 ```bash
 cd services/web-console

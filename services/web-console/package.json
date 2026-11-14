@@ -1,8 +1,7 @@
 {
   "name": "web-console",
   "private": true,
-  "description": "Front-end of the demo console: TypeScript compiled to static/js/ and served by app.py",
-  "type": "module",
+  "description": "Console page markup: src/page.ts compiled to static/js/ and served by app.py",
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
