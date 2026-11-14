@@ -78,9 +78,11 @@ htmlcov/
 coverage.xml
 *.cover
 
-# ─── Node (dashboard future) ─────────────────────────────────────────────────
+# ─── Node (web-console front-end) ────────────────────────────────────────────
 node_modules/
 npm-debug.log*
+# Compiled from services/web-console/src/ by `npm run build` (and in the image build).
+services/web-console/static/js/
 
 # ─── Terraform ───────────────────────────────────────────────────────────────
 **/.terraform/
@@ -103,3 +105,4 @@ services/forecasting-service/models/*
 # ─── Load test artefacts ─────────────────────────────────────────────────────
 tests/load/.lib/
 tests/load/results/
+tests/postman/report.html

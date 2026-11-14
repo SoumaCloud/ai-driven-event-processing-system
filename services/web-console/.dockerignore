@@ -1,0 +1,5 @@
+# Build output and local installs are recreated inside the image build.
+node_modules/
+static/js/
+__pycache__/
+*.pyc

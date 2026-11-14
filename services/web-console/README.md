@@ -14,15 +14,23 @@ Demo steps: **01** publish events (some broken on purpose) · **02** read the la
 
 Port 9092 is Kafka's binary protocol, not a web page. Opening it in a browser only logs `InvalidReceiveException (size = 1195725856)` in Kafka, which is the bytes `GET `. Use this console to see Kafka instead.
 
-Run it outside Docker (from the repo root, stack up):
+The front-end is TypeScript: `src/console.ts` (page logic), `src/util.ts` (DOM, formatting, fetch helpers) and `src/types.ts` (the `/api/*` response shapes). `tsc` compiles it to `static/js/`, which is gitignored; the Docker build does this in a Node stage. `static/` holds the hand-written `index.html` and `console.css`.
 
 ```bash
-pip install -r console/requirements.txt
+cd services/web-console
+npm ci
+npm run build       # or: npm run watch / npm run typecheck
+```
+
+Run it outside Docker (from the repo root, stack up, front-end built):
+
+```bash
+pip install -r services/web-console/requirements.txt
 KAFKA_BOOTSTRAP_SERVERS=localhost:9092 INGESTION_URL=http://localhost:9080 DIAGNOSTIC_URL=http://localhost:9082 \
 FORECASTING_URL=http://localhost:9081 ARCHIVER_URL=http://localhost:9083 PROMETHEUS_URL=http://localhost:9090 \
 GRAFANA_URL=http://localhost:9030 ZOOKEEPER_ADDR=localhost:2181 S3_ENDPOINT_URL=http://localhost:9000 \
 AWS_ACCESS_KEY_ID=minioadmin AWS_SECRET_ACCESS_KEY=minioadmin \
-uvicorn app:app --app-dir console --port 9099
+uvicorn app:app --app-dir services/web-console --port 9099
 ```
 
 (ZooKeeper isn't published to the host, so its row shows down when the console runs outside Docker.)

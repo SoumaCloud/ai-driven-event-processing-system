@@ -95,7 +95,7 @@ Detailed sequence diagrams and failure modes are in [`docs/ARCHITECTURE.md`](doc
 | `forecasting-service` | Python 3.11, FastAPI, numpy; scikit-learn for training | 9081 | Prometheus polling, forecasting, confidence flagging, prediction store, alert store |
 | `diagnostic-service` | Python 3.11, FastAPI, confluent-kafka | 9082 | Per-event anomaly scoring, threshold evaluation, Kafka audit publishing, model swaps |
 | `event-archiver` | Python 3.11, confluent-kafka, boto3 | 9083 (metrics) | Kafka → S3 archival |
-| `demo-console` | Python 3.11, FastAPI, vanilla JS | 9099 | Local only: live pipeline dashboard (Kafka, GraphRAG, TFT, health) and a click-through demo |
+| `demo-console` | Python 3.11, FastAPI, TypeScript | 9099 | Local only: live pipeline dashboard (Kafka, GraphRAG, TFT, health) and a click-through demo |
 | Neo4j | neo4j:5.26 community | 9074 (browser), 9687 (bolt) | Dependency graph for GraphRAG |
 | Ollama | ollama/ollama, llama3.2:3b | 9434 | Local LLM that writes GraphRAG playbooks |
 | Grafana | Grafana 11 | 9030 | REQ-034 dashboard, service health, SLOs |
@@ -346,12 +346,12 @@ The full list is in [`docs/CONTRACTS.md` §5](docs/CONTRACTS.md). The most usefu
 │   ├── forecasting-service/    FastAPI forecasting, predictions, alerts (REQ-021 to REQ-025)
 │   ├── diagnostic-service/     FastAPI anomaly detection (REQ-016 to REQ-020) + Kafka consumer/producer
 │   ├── event-archiver/         Kafka → S3 archiver (REQ-028 to REQ-030), archive_client/, tests/
-│   └── web-console/            Demo dashboard on :9099 (FastAPI backend + static HTML/CSS/JS)
+│   └── web-console/            Demo dashboard on :9099 (FastAPI backend + TypeScript front-end)
 ├── contracts/                  JSON Schemas for every message / model
 ├── infra/                      docker-compose (+ AWS override), Prometheus (+ rules), Grafana, k8s, terraform
 ├── tests/
 │   ├── load/                   JMeter plan, runner, PASS/FAIL analyzer (REQ-001/004)
-│   └── reports/                Test execution reports (Postman, etc.)
+│   └── postman/                Postman API collection (run with newman)
 ├── ci/jenkins/                 Local Jenkins (Docker) that runs the Jenkinsfile
 ├── scripts/                    setup-local.sh, produce-events.sh, demo.sh
 ├── docs/                       ARCHITECTURE, CONTRACTS, SLO, PLAN, STRUCTURE, DASHBOARDS, adr/, runbooks/, jira/

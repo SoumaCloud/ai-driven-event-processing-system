@@ -1,5 +1,5 @@
 """
-console/app.py — demo console: one page that shows the pipeline live and drives the demo.
+services/web-console/app.py — demo console: one page that shows the pipeline live and drives the demo.
 
 Runs inside the compose network (port 8099, host 9099). The browser only talks
 to this origin; the console reads Kafka directly (topics, offsets, consumer

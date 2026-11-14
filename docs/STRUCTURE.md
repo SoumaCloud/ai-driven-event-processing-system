@@ -38,9 +38,11 @@ ai-driven-system/
 │   │   ├── archive_client/client.py   ArchiveClient: archive_batch / archive (boto3; MinIO or S3)
 │   │   └── tests/                     Fake S3 + consumer tests
 │   │
-│   └── web-console/                   Demo dashboard on :9099 (FastAPI backend + static HTML/CSS/JS)
+│   └── web-console/                   Demo dashboard on :9099 (FastAPI backend + TypeScript front-end)
 │       ├── app.py, requirements.txt, Dockerfile
-│       └── static/                    index.html, console.js, console.css
+│       ├── package.json, tsconfig.json  TypeScript build (tsc → static/js/)
+│       ├── src/                       console.ts, util.ts, types.ts (API response types)
+│       └── static/                    index.html, console.css (+ generated js/)
 │
 ├── contracts/                         Machine-readable contracts (JSON Schema 2020-12)
 │   ├── README.md
@@ -82,7 +84,7 @@ ai-driven-system/
 │
 ├── tests/
 │   ├── load/                          JMeter load test (REQ-001/004): jmeter/*.jmx, run-load-test.sh, analyze.py
-│   └── reports/                       Test execution reports (Postman HTML report, etc.)
+│   └── postman/                       Postman API collection for every service (run with newman)
 │
 ├── ci/jenkins/                        Local Jenkins in Docker that runs the Jenkinsfile (run-local.sh)
 │

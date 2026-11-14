@@ -1,8 +1,17 @@
 # syntax=docker/dockerfile:1
 # demo-console — live pipeline view + guided demo for the local stack
-# Build: docker build -t demo-console ./console
+# Build: docker build -t demo-console services/web-console
 
 ARG PYTHON_IMAGE=python:3.11-slim
+ARG NODE_IMAGE=node:22-alpine
+
+# Front-end: compile src/*.ts to static/js/.
+FROM ${NODE_IMAGE} AS frontend
+WORKDIR /build
+COPY package.json package-lock.json tsconfig.json ./
+RUN npm ci --no-audit --no-fund
+COPY src/ ./src/
+RUN npm run build
 
 FROM ${PYTHON_IMAGE} AS builder
 ENV PIP_NO_CACHE_DIR=1 \
@@ -22,6 +31,7 @@ COPY --from=builder /opt/venv /opt/venv
 WORKDIR /app
 COPY --chown=10001:10001 app.py ./
 COPY --chown=10001:10001 static/ ./static/
+COPY --from=frontend --chown=10001:10001 /build/static/js/ ./static/js/
 ENV PATH="/opt/venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
