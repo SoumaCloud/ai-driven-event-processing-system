@@ -105,4 +105,5 @@ services/forecasting-service/models/*
 # ─── Load test artefacts ─────────────────────────────────────────────────────
 tests/load/.lib/
 tests/load/results/
+tests/reports/
 tests/postman/report.html
